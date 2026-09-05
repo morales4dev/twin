@@ -19,7 +19,7 @@ See [proposal.md](proposal.md) for why. Twin is a single Python Gradio app under
 ## Decisions
 
 1. **Canon in `ai-specs/AGENTS.md`; thin root `AGENTS.md`.**
-   Copilot loads root `AGENTS.md`. Root file is a pointer (read `ai-specs/AGENTS.md` first; language: repo English / user Spanish in chat). Do not add `.github/copilot-instructions.md` unless apply proves Copilot ignores `AGENTS.md`.
+   Copilot loads root `AGENTS.md`. Root file is a pointer (read `ai-specs/AGENTS.md` first; language: English for repo content and for chat with the user). Do not add `.github/copilot-instructions.md` unless apply proves Copilot ignores `AGENTS.md`.
    Alternative: duplicate the constitution in `.github/copilot-instructions.md` now — rejected (two sources of truth).
 
 2. **Agent standards live under `ai-specs/standards/`; product specs stay `openspec/specs/`.**

@@ -6,7 +6,7 @@ Twin is a Python Gradio digital twin, but it has no agent constitution: `ai-spec
 
 This change is tooling, constitution, and OpenSpec project context. It does **not** change visitor-facing twin behavior. Specs are skipped (`skip_specs: true`).
 
-- Add a coder-agnostic constitution at `ai-specs/AGENTS.md` and a thin root `AGENTS.md` that points Copilot at it. Do not add a duplicate `.github/copilot-instructions.md` unless Copilot ignores `AGENTS.md`.
+- Add a coder-agnostic constitution at `ai-specs/AGENTS.md` and a thin root `AGENTS.md` that points Copilot at it. Language: English for repo content and for chat with the user. Do not add a duplicate `.github/copilot-instructions.md` unless Copilot ignores `AGENTS.md`.
 - Add agent standards under `ai-specs/standards/` (never `ai-specs/specs/`). Product specs stay in `openspec/specs/`. Always use those full paths.
 - Fill `openspec/config.yaml` `context` and `rules` with twin-native constraints: Python 3.12, Gradio ChatInterface, MiniMax via OpenAI-compatible client, pytest units, pytest+Playwright driving the Gradio chat UI. Set `githubCopilot.cloudAgent` to `false`. Delete `.github/workflows/copilot-setup-steps.yml` (unused leftover; no Copilot cloud coding agent). Do **not** invent a custom OpenSpec schema.
 - Encode a Context7 **library-ID policy** in constitution/standards: resolve the correct library IDs and pass pinned versions. Do **not** add `.vscode/mcp.json` in v1. Do not lock a hosted MCP server URL.
