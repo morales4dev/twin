@@ -53,7 +53,7 @@ Turn A output SHALL be exactly `IN_SCOPE` or `OUT_OF_SCOPE` (one label, no essay
 - **THEN** the expected classifier label is `OUT_OF_SCOPE`
 
 ### Requirement: Python fail-closed routing owns the visitor-facing reply
-The system SHALL parse the Turn A label in Python. Python MUST NOT use Turn A content as the visitor-facing reply. Only a parsed `IN_SCOPE` SHALL start Turn B. `OUT_OF_SCOPE`, any other token, empty or unparseable output, or a classifier error SHALL fail closed: the visitor receives the existing canned twin refusal and Turn B MUST NOT run.
+The system SHALL parse the Turn A label in Python. Before reading a label, Python MUST discard any `<think>…</think>` reasoning blocks in Turn A content (those blocks MAY span multiple lines). After those blocks are removed, the remaining text MUST parse as exactly `IN_SCOPE` or `OUT_OF_SCOPE` (optional surrounding whitespace or blank lines). Python MUST NOT treat a label that appears only inside a reasoning block as the parsed label. Python MUST NOT use Turn A content as the visitor-facing reply. Only a parsed `IN_SCOPE` SHALL start Turn B. `OUT_OF_SCOPE`, any other token, empty or unparseable output, or a classifier error SHALL fail closed: Turn B MUST NOT run. When Turn B does not run and the latest user message contained a typed email address, the visitor-facing reply SHALL be a Python lead acknowledgement that interpolates that extracted address (LEAD_ACK). When Turn B does not run and the latest user message contained no typed email address, the visitor SHALL receive the existing canned twin refusal. MiniMax MUST NOT generate LEAD_ACK.
 
 #### Scenario: Parsed IN_SCOPE starts Turn B
 - **WHEN** Python parses Turn A as exactly `IN_SCOPE`
@@ -61,17 +61,53 @@ The system SHALL parse the Turn A label in Python. Python MUST NOT use Turn A co
 
 #### Scenario: Parsed OUT_OF_SCOPE refuses without Turn B
 - **WHEN** Python parses Turn A as `OUT_OF_SCOPE`
+- **AND** the latest user message contains no typed email address
+- **THEN** the visitor receives the canned twin refusal
+- **AND** Turn B MUST NOT run
+
+#### Scenario: Parsed OUT_OF_SCOPE with typed email acknowledges the lead
+- **WHEN** Python parses Turn A as `OUT_OF_SCOPE`
+- **AND** the latest user message contains a typed email address
+- **THEN** the system records that typed email in Python
+- **AND** the visitor receives LEAD_ACK interpolating that extracted address
+- **AND** Turn B MUST NOT run
+
+#### Scenario: Think block then IN_SCOPE is in scope
+- **WHEN** Turn A content contains a `<think>…</think>` block followed by `IN_SCOPE`
+- **THEN** Python parses Turn A as `IN_SCOPE`
+- **AND** the system starts Turn B
+
+#### Scenario: Think block then OUT_OF_SCOPE is out of scope
+- **WHEN** Turn A content contains a `<think>…</think>` block followed by `OUT_OF_SCOPE`
+- **AND** the latest user message contains no typed email address
+- **THEN** Python parses Turn A as `OUT_OF_SCOPE`
+- **AND** the visitor receives the canned twin refusal
+- **AND** Turn B MUST NOT run
+
+#### Scenario: Label only inside a think block fails closed
+- **WHEN** Turn A content names `IN_SCOPE` or `OUT_OF_SCOPE` only inside a `<think>…</think>` block
+- **AND** nothing parseable as a label remains after that block is removed
+- **AND** the latest user message contains no typed email address
 - **THEN** the visitor receives the canned twin refusal
 - **AND** Turn B MUST NOT run
 
 #### Scenario: Unparseable classifier output fails closed
 - **WHEN** Turn A returns empty output, an essay, or any token other than `IN_SCOPE` or `OUT_OF_SCOPE`
+- **AND** the latest user message contains no typed email address
 - **THEN** the visitor receives the canned twin refusal
 - **AND** Turn B MUST NOT run
 
 #### Scenario: Classifier error fails closed
 - **WHEN** the Turn A MiniMax call errors
+- **AND** the latest user message contains no typed email address
 - **THEN** the visitor receives the canned twin refusal
+- **AND** Turn B MUST NOT run
+
+#### Scenario: Fail-closed with typed email acknowledges the lead
+- **WHEN** Turn A is unparseable or the Turn A MiniMax call errors
+- **AND** the latest user message contains a typed email address
+- **THEN** the system records that typed email in Python
+- **AND** the visitor receives LEAD_ACK interpolating that extracted address
 - **AND** Turn B MUST NOT run
 
 #### Scenario: Classifier text is not shown to the visitor
