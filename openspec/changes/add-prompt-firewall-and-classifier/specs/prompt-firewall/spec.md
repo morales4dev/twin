@@ -62,6 +62,7 @@ If the latest user message contains a typed email address, the system SHALL reco
 - **WHEN** the latest user message contains a typed email address and also matches the deny-list
 - **THEN** the system records that typed email in Python
 - **AND** the visitor still receives the canned refusal
+- **AND** the visitor MUST NOT receive a lead acknowledgement
 - **AND** no MiniMax call is made for that turn
 
 #### Scenario: Blocked turn without a typed email records nothing

@@ -27,9 +27,43 @@ Constraints: Python 3.12.12, sync OpenAI-compatible client, no new runtime libra
 
 ### 1. Ingress pipeline inside `chat()`, small helpers beside it
 
-`chat()` becomes: capture typed email → firewall → Turn A → parse/fail-closed → existing Turn B loop or canned refusal.
+`chat()` becomes: capture typed email (keep the extracted address in Python) → firewall → Turn A → parse/fail-closed → Turn B, canned refusal, or LEAD_ACK.
 
-Helpers live in small modules under `backend/src/` (firewall match, Turn A prompt + parse, email extract). `app.py` stays the Gradio entry and owns the MiniMax calls.
+Helpers live in small modules under `backend/src/` (firewall match, Turn A prompt + parse, email extract, LEAD_ACK copy). `app.py` stays the Gradio entry and owns the MiniMax calls.
+
+Visitor-facing reply after extract (see diagram below):
+
+- Firewall match → canned refusal. If an email was recorded this turn, capture is **silent** (no LEAD_ACK).
+- Parsed `IN_SCOPE` → existing Turn B loop (unchanged).
+- Turn B does not run (`OUT_OF_SCOPE` or fail-closed) **and** this turn had a typed email → Python LEAD_ACK interpolating that extracted address. No Turn B.
+- Turn B does not run and this turn had no typed email → canned refusal.
+
+```text
+                    latest user string
+                            │
+                            ▼
+                 extract typed email?
+                    │ yes: record + keep address
+                    ▼
+                 firewall match?
+                    │
+         yes ───────┴─────── no
+          │                  │
+          ▼                  ▼
+     canned refusal      Turn A (no tools)
+     (silent capture     parse label in Python
+      if email)              │
+                    IN_SCOPE ┤
+                             │ else (OUT_OF_SCOPE / fail-closed)
+                             ▼
+                      typed email this turn?
+                       │ yes          │ no
+                       ▼              ▼
+                    LEAD_ACK     canned refusal
+                    (no Turn B)   (no Turn B)
+
+                    IN_SCOPE → Turn B (twin + tools + history)
+```
 
 Alternative considered: all logic in `app.py`. Rejected; the loop would mix matching, prompting, and the tool while-loop.
 
@@ -49,9 +83,21 @@ Before the firewall result is returned, scan the latest user string with a conse
 
 Turn B tools stay as they are (allowlisting is out of scope). An in-scope turn that also contains a typed email may therefore Pushover twice if the model also calls the tool. Accepted for v1; blocked/out-of-scope turns still record the typed address without a model.
 
+Firewall + typed email: record in Python, return the canned refusal, do **not** acknowledge the address (silent capture). A lead ack on a deny-list hit would confirm the capture channel to an injector.
+
+When Turn B does not run and this turn had a typed email (`OUT_OF_SCOPE` or fail-closed: unparseable label or Turn A exception), Python returns LEAD_ACK. Fail-closed with an email is treated like `OUT_OF_SCOPE`, not like the firewall: the deny-list did not fire and the address is already recorded. Interpolate only the **extracted** address; MiniMax MUST NOT write this reply. Do not start Turn B because the message contained an email.
+
+LEAD_ACK copy (Python constant; interpolate `{email}` with the extracted address):
+
+> Thanks — I have recorded {email} so Alberto can follow up. I can still only discuss his professional background, experience, and the interests on his profile. What would you like to know about that?
+
 Alternative considered: Gradio email form. Out of v1 (backlog item 12).
 
 Alternative considered: block Turn B from calling `record_user_details`. That is tool allowlisting; out of scope.
+
+Alternative considered: third Turn A label `LEAD`. Rejected; duplicates the regex and lets the model lie.
+
+Alternative considered: run Turn B whenever an email is present. Rejected; that reopens tool abuse on off-topic turns.
 
 ### 4. Turn A request shape
 
@@ -65,11 +111,24 @@ Alternative considered: JSON object output. Rejected; two tokens, parse in Pytho
 
 ### 5. Parse fail-closed in Python
 
-Normalize Turn A `message.content`: strip whitespace, take the first non-empty line, uppercase. If that token is exactly `IN_SCOPE` or `OUT_OF_SCOPE`, use it. Anything else (None, empty, extra prose, JSON, tool_calls, unexpected finish) → canned refusal, no Turn B.
+MiniMax-M2.5 may wrap chain-of-thought in `<think>…</think>` before the label. Python owns that noise.
 
-Classifier API exceptions → canned refusal, no Turn B. Do not retry Turn A in v1.
+Normalize Turn A `message.content`:
 
-Visitor-facing refusal is the exact Hard Rejection sentence already in `context.py`. Put it in one shared constant so firewall, fail-closed, and tests compare the same string. Do not import the full twin prompt into the firewall.
+1. If content is None, unparseable.
+2. Remove every `<think>…</think>` block (case-insensitive; blocks may span newlines). Do not read tokens inside those blocks.
+3. Strip whitespace on what remains, take the first non-empty line, uppercase.
+4. If that token is exactly `IN_SCOPE` or `OUT_OF_SCOPE`, use it.
+
+Anything else (None, empty after strip, extra prose, JSON, tool_calls, unexpected finish, a label that appears only inside `<think>`) → no Turn B; visitor reply is LEAD_ACK if this turn had a typed email, otherwise the canned refusal.
+
+Do not search the original string for `IN_SCOPE` / `OUT_OF_SCOPE`: the think text already names those tokens and can pick the wrong one.
+
+Alternative considered: regex-search the raw completion for the first `IN_SCOPE|OUT_OF_SCOPE`. Rejected; MiniMax reasons about both labels inside `<think>`.
+
+Classifier API exceptions → no Turn B; same visitor-reply split as unparseable output (LEAD_ACK if typed email this turn, else canned). Do not retry Turn A in v1.
+
+Visitor-facing **canned refusal** is the exact Hard Rejection sentence already in `context.py`. Put it in one shared constant so firewall, no-email fail-closed, and tests compare the same string. LEAD_ACK is a second Python constant (with `{email}` interpolation). Do not import the full twin prompt into the firewall. MiniMax MUST NOT generate either string.
 
 ### 6. Turn B is the current loop unchanged
 
@@ -77,15 +136,17 @@ On parsed `IN_SCOPE`, call the existing `messages = system + history + user` + `
 
 ### 7. Tests first, MiniMax mocked
 
-Units in `backend/tests/unit/`: firewall family hits/misses, email extract (present / absent / not invented), label parse, fail-closed (bad token, empty, exception), mixed-turn expected label for the parser (fixture string `OUT_OF_SCOPE` → no Turn B), and `chat()` orchestration with a mocked `openai.chat.completions.create` (firewall match → zero calls; `IN_SCOPE` → two calls, second with tools; `OUT_OF_SCOPE` → one call without tools). No network.
+Units in `backend/tests/unit/`: firewall family hits/misses, email extract (present / absent / not invented), label parse (including a `<think>` wrapper then a label, and a label only inside `<think>`), fail-closed (bad token, empty, exception), mixed-turn expected label for the parser (fixture string `OUT_OF_SCOPE` → no Turn B), LEAD_ACK copy interpolates the extracted address, and `chat()` orchestration with a mocked `openai.chat.completions.create` (firewall match → zero calls + canned; firewall match + typed email → record + canned, no LEAD_ACK; `IN_SCOPE` → two calls, second with tools; `OUT_OF_SCOPE` / unparseable / Turn A exception without email → one call without tools + canned, no Turn B; same three without Turn B **with** typed email → record + LEAD_ACK). No network.
 
 ## Risks / Trade-offs
 
 - **Paraphrase bypass of the deny-list** → Firewall is a cheap first hop only; Turn A still fail-closes unknown/meta/mixed. Iterate patterns later; do not copy Jose.
-- **Classifier injection / essay instead of a label** → Delimited data + Python exact-token parse; fail closed.
+- **Classifier injection / essay instead of a label** → Delimited data + Python exact-token parse after stripping `<think>` blocks; fail closed. Do not harvest a label from inside the think block.
 - **False `IN_SCOPE` on a skill trap** → Mixed and skill-trap few-shots in Turn A; v1 still has no output filter (known residual).
 - **False firewall hits on recruiter phrasing** → Keep families tight (slash commands, forged SYSTEM, explicit dump/debug). Do not add bare `grep` as a lone token unless tests show it is required; prefer “show your prompt/memory” and debug framing.
 - **Double Pushover on in-scope + typed email** → Accepted until tool allowlisting.
+- **LEAD_ACK vs canned on fail-closed + email** → Acknowledge: deny-list did not fire; silent capture is reserved for firewall hits.
+- **LEAD_ACK echoes the typed address** → Interpolate only the regex extract from this turn; never invent or pull from history.
 - **Extra latency/cost on every unblocked turn** → One short Turn A before maybe Turn B; firewall matches pay zero model cost.
 - **Turn B still has full history (crescendo)** → Explicit non-goal; Turn A stays stateless anyway.
 
