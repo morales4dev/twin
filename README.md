@@ -10,6 +10,8 @@ App entry: `backend/src/app.py` (`gr.ChatInterface`, MiniMax-M2.5 via the OpenAI
 
 ## Setup
 
+Package installs use `uv pip install --python backend/.venv/bin/python` (from repo root) or `uv pip install --python .venv/bin/python` (from `backend/`). Do not use bare `pip install`.
+
 ```bash
 cd backend
 uv venv .venv --python 3.12.12
@@ -41,5 +43,5 @@ Units: `backend/tests/unit/`. Playwright E2E against Gradio chat is a later slot
 
 ## Agent OS vs product specs
 
-- Agent constitution: `ai-specs/AGENTS.md` (standards in `ai-specs/standards/`).
+- Agent constitution: `ai-specs/AGENTS.md`. Standards under `ai-specs/standards/` are coding rules plus pins, not pins only.
 - Product specs: `openspec/specs/`.
