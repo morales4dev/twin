@@ -1,3 +1,5 @@
+# Hardening
+
 ## Cheap / fast (hours)
 
 ### 1. Recency reminder (sticky system + last-user sandwich)
@@ -208,3 +210,13 @@ MiniMax can still **paraphrase** CV facts into mild inference, or sneak a short 
 **Practical order if time is limited:** **6 + 5 + 4 + 3 + 1 + 8 + 7 + 10 + 16**. That set is most of the 1000×. 13–15 are polish once the harness is red.
 
 I would not ship “all measures” as one blob on day one: ship 1–8, replay 01_jose, then add retrieval (10) where the remaining fails are world-knowledge and inference.
+
+# Cost reduction
+
+## Prompt catching
+
+## Model election
+
+## Input compression
+
+## Output size
