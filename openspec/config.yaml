@@ -8,6 +8,7 @@ context: |
   Tests: pytest units under backend/tests/unit/; Playwright drives Gradio chat, not a live MiniMax suite in v1.
   Agent constitution: ai-specs/AGENTS.md. Standards: ai-specs/standards/python.md, ai-specs/standards/testing.md, ai-specs/standards/context7.md.
   Product specs: openspec/specs/. Do not invent product specs for tooling-only work.
+  OpenSpec delivery: VS Code + Copilot (.github/skills/) and Cursor (.cursor/skills/).
   Language: English for repo content and for chat with the user.
 
 rules:
@@ -17,7 +18,7 @@ rules:
     - Always include a Non-goals section.
   design:
     - Stay twin-native. File layout and apply order must match existing backend/.venv + requirements.txt.
-    - Project skills live under ai-specs/skills/. OpenSpec CLI skills stay under .github/skills/.
+    - Project skills live under ai-specs/skills/. OpenSpec CLI skills stay under .github/skills/ (Copilot) and .cursor/skills/ (Cursor).
   tasks:
     - Keep tasks small. Each task must include verification.
     - Do not invent product specs.
