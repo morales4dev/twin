@@ -21,3 +21,8 @@ playwright==1.62.0
 - Config: `backend/pytest.ini` (`testpaths = tests`, `pythonpath = src`). Run from `backend/` with `backend/.venv/bin/python -m pytest`.
 - Unit smoke is import-level and must not hit the network.
 - E2E under `backend/tests/e2e/` may be skipped until a later change implements Gradio chat coverage.
+
+### MiniMax in units
+
+- Units that need MiniMax take a fake client on `chat()` / `classify` / `complete`, or call `classify` / `complete` directly.
+- Patching `app.openai` is not the design. Existing ingress patches may stay until a later change adds the injection seam.
