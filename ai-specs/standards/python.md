@@ -32,6 +32,23 @@ requests==2.34.2
 
 - Do not change visitor-facing chat or migrate `backend/src/**` unless a product change says so.
 
+### Module shape
+
+Operational default for any change that edits `backend/src`. Current `backend/src` may not match yet; do not “fix” it in an OS-only change.
+
+| Name | Role |
+| --- | --- |
+| `chat()` | Gradio `(message, history) -> str`. Sequences only. |
+| `classify(message, client)` | Turn A I/O. Omits `tools=`. Returns `allowed_for_turn_b` plus reason (`in_scope` / `out_of_scope` / `unparseable` / `error`). No visitor strings. |
+| `complete(message, history, client)` | Turn B and the tool loop. |
+| `fail_closed_reply(email)` | Lead-ack vs canned. Used only after Turn A. |
+
+- Firewall plus typed email stays canned.
+- Inject the MiniMax client into `chat()` as an optional kwarg (Gradio still calls two arguments).
+- No shared MiniMax helper that could put `tools=` on Turn A.
+- KISS, YAGNI, and DRY win over a class tree or Protocols for one implementation.
+- Do not name new modules or mandate `ScopeLabel` / Pydantic here. File placement and those types belong to a later product or refactor change.
+
 ## LLM protocol (targets only)
 
 These are coding targets for a later **product** change. Do not implement them in `backend/src/**` in an OS-only change.

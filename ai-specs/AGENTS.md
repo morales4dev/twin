@@ -21,7 +21,7 @@ Load OpenSpec CLI skills from `.github/skills/` (VS Code + Copilot) or `.cursor/
 
 ## Stack and testing
 
-See `ai-specs/standards/python.md` and `ai-specs/standards/testing.md`. See `ai-specs/standards/context7.md` for docs lookup.
+See `ai-specs/standards/python.md` and `ai-specs/standards/testing.md`. See `ai-specs/standards/context7.md` for docs lookup. Before editing `backend/src`, read `python.md` Layer 2 and `testing.md` Layer 2.
 
 ## Process
 
