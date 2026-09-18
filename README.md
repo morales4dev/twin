@@ -29,7 +29,7 @@ From `backend/`:
 .venv/bin/python src/app.py
 ```
 
-VS Code launch config `Twin backend` uses `${workspaceFolder}/backend` and loads `${workspaceFolder}/.env`.
+VS Code launch config `Twin backend` uses `${workspaceFolder}/backend` and loads `${workspaceFolder}/.env`. Cursor uses the same `.vscode` launch config and interpreter.
 
 ## Test
 
