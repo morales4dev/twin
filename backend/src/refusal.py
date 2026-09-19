@@ -13,3 +13,9 @@ LEAD_ACK = (
 
 def format_lead_ack(email: str) -> str:
     return LEAD_ACK.format(email=email)
+
+
+def fail_closed_reply(email: str | None) -> str:
+    if email is not None:
+        return format_lead_ack(email)
+    return CANNED_REFUSAL
