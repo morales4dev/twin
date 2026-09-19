@@ -1,3 +1,9 @@
+from dataclasses import dataclass
+
+from scope_label import IN_SCOPE, OUT_OF_SCOPE, parse_scope_label
+
+MODEL_NAME = "MiniMax-M2.5"
+
 CLASSIFIER_SYSTEM_PROMPT = """
 You are a binary scope classifier for Alberto Morales's digital twin.
 
@@ -35,3 +41,27 @@ def build_classifier_messages(message: str) -> list[dict[str, str]]:
         {"role": "system", "content": CLASSIFIER_SYSTEM_PROMPT},
         {"role": "user", "content": wrap_user_message(message)},
     ]
+
+
+@dataclass(frozen=True)
+class ClassifyResult:
+    allowed_for_turn_b: bool
+    reason: str
+
+
+def classify(message: str, client) -> ClassifyResult:
+    try:
+        classifier_response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=build_classifier_messages(message),
+        )
+        raw_label = classifier_response.choices[0].message.content
+    except Exception:
+        return ClassifyResult(allowed_for_turn_b=False, reason="error")
+
+    parsed = parse_scope_label(raw_label)
+    if parsed == IN_SCOPE:
+        return ClassifyResult(allowed_for_turn_b=True, reason="in_scope")
+    if parsed == OUT_OF_SCOPE:
+        return ClassifyResult(allowed_for_turn_b=False, reason="out_of_scope")
+    return ClassifyResult(allowed_for_turn_b=False, reason="unparseable")

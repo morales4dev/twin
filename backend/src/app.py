@@ -1,61 +1,29 @@
 from openai import OpenAI
-from context import TWIN_SYSTEM_PROMPT
-from tools import tools, handle_tool_calls, record_user_details
 from styles import CSS, JS, EXAMPLES
 from dotenv import load_dotenv
 import gradio as gr
 from context import get_absolute_path
-from classifier import build_classifier_messages
-from email_capture import extract_typed_email
+from classifier import MODEL_NAME, classify
+from complete import complete
+from email_capture import capture_typed_email
 from firewall import matches_firewall
-from refusal import CANNED_REFUSAL, format_lead_ack
-from scope_label import IN_SCOPE, parse_scope_label
+from refusal import CANNED_REFUSAL, fail_closed_reply
 
 print(get_absolute_path())
 load_dotenv(override=True)
 
-# MODEL_NAME = "gpt-5.4-mini"
-MODEL_NAME = "MiniMax-M2.5"
-
 openai = OpenAI()
 
-system = [{"role": "system", "content": TWIN_SYSTEM_PROMPT}]
 
-
-def chat(message, history):
-    email = extract_typed_email(message)
-    if email is not None:
-        record_user_details(email)
-
+def chat(message: str, history: list, client=None) -> str:
+    client = client or openai
+    email = capture_typed_email(message)
     if matches_firewall(message):
         return CANNED_REFUSAL
-
-    try:
-        classifier_response = openai.chat.completions.create(
-            model=MODEL_NAME,
-            messages=build_classifier_messages(message),
-        )
-        raw_label = classifier_response.choices[0].message.content
-    except Exception:
-        if email is not None:
-            return format_lead_ack(email)
-        return CANNED_REFUSAL
-
-    if parse_scope_label(raw_label) != IN_SCOPE:
-        if email is not None:
-            return format_lead_ack(email)
-        return CANNED_REFUSAL
-
-    messages = system + history + [{"role": "user", "content": message}]
-    response = openai.chat.completions.create(model=MODEL_NAME, messages=messages, tools=tools)
-    while response.choices[0].finish_reason == "tool_calls":
-        assistant_message = response.choices[0].message
-        tool_calls = assistant_message.tool_calls
-        results = handle_tool_calls(tool_calls)
-        messages.append(assistant_message)
-        messages.extend(results)
-        response = openai.chat.completions.create(model=MODEL_NAME, messages=messages, tools=tools)
-    return response.choices[0].message.content
+    result = classify(message, client)
+    if not result.allowed_for_turn_b:
+        return fail_closed_reply(email)
+    return complete(message, history, client)
 
 
 if __name__ == "__main__":
