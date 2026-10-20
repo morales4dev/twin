@@ -16,15 +16,15 @@
 
 - Layout: app under `backend/src/`, venv `backend/.venv`, install with uv.
 - Create the venv with `uv venv`. Install packages with `uv pip install --python backend/.venv/bin/python`. Never bare `pip install`.
-- Pin only direct runtime deps in `backend/requirements.txt`. Do not pin unused transitives (fastapi, uvicorn, httpx). Do not add unpinned agent SDKs.
+- Pin only direct runtime deps in `backend/requirements.txt`. Do not pin unused transitives (fastapi, uvicorn, httpx, openai). Do not add unpinned agent SDKs.
 - Runtime: Python 3.12.12 (documented; not a pip pin).
 - App: Gradio `ChatInterface` under `backend/src/`.
-- Model client: MiniMax-M2.5 via the **sync** OpenAI-compatible `OpenAI()` client (`openai`). Chat stays sync. Do not document or rewrite the loop as async.
+- Model I/O: sync LiteLLM via `llm.completion` (primary then fallback). Chat stays sync. Do not document or rewrite the loop as async. Do not import `openai` or `anthropic` in `backend/src`.
 - Current runtime pins:
 
 ```
 gradio==6.26.0
-openai==3.8.0
+litellm==1.106.1
 pypdf==6.17.0
 python-dotenv==1.2.3
 requests==2.34.2
@@ -39,13 +39,14 @@ Operational default for any change that edits `backend/src`. Current `backend/sr
 | Name | Role |
 | --- | --- |
 | `chat()` | Gradio `(message, history) -> str`. Sequences only. |
-| `classify(message, client)` | Turn A I/O. Omits `tools=`. Returns `allowed_for_turn_b` plus reason (`in_scope` / `out_of_scope` / `unparseable` / `error`). No visitor strings. |
-| `complete(message, history, client)` | Turn B and the tool loop. |
+| `classify(message, llm_completion)` | Turn A I/O. Omits `tools=`. Returns `allowed_for_turn_b` plus reason (`in_scope` / `out_of_scope` / `unparseable` / `error`). No visitor strings. |
+| `complete(message, history, llm_completion)` | Turn B and the tool loop. |
+| `llm.completion(messages, *, tools=None)` | Primary-then-fallback LiteLLM call. Passes tools through only when the caller supplied them. |
 | `fail_closed_reply(email)` | Lead-ack vs canned. Used only after Turn A. |
 
 - Input guardrail plus typed email stays canned.
-- Inject the MiniMax client into `chat()` as an optional kwarg (Gradio still calls two arguments).
-- No shared MiniMax helper that could put `tools=` on Turn A.
+- Inject `llm_completion` into `chat()` as an optional kwarg (Gradio still calls two arguments). `classify` and `complete` require it (no default).
+- The shared helper must pass tools through. It must not add `tools=` to a call that omitted them.
 - KISS, YAGNI, and DRY win over a class tree or Protocols for one implementation.
 - Do not name new modules or mandate `ScopeLabel` / Pydantic here. File placement and those types belong to a later product or refactor change.
 

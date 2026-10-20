@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Stateless binary classification of the current visitor message so only in-scope career questions reach the twin completion; classify and answer are never the same MiniMax call.
+Stateless binary classification of the current visitor message so only in-scope career questions reach the twin completion; classify and answer are never the same LLM call.
 
 ## Requirements
 

@@ -3,7 +3,6 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from classifier import MODEL_NAME
 from complete import complete
 from tools import tools as twin_tools
 
@@ -14,17 +13,10 @@ def _completion(content: str | None, finish_reason: str = "stop") -> SimpleNames
     return SimpleNamespace(choices=[choice])
 
 
-def _fake_client(return_value: object) -> tuple[SimpleNamespace, Mock]:
-    create = Mock(return_value=return_value)
-    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
-    return client, create
-
-
-def test_complete_one_shot_uses_tools_and_model() -> None:
-    client, create = _fake_client(_completion("Alberto's last role is described in his profile."))
-    reply = complete("What was Alberto's last role?", [], client)
+def test_complete_one_shot_uses_tools() -> None:
+    llm_completion = Mock(return_value=_completion("Alberto's last role is described in his profile."))
+    reply = complete("What was Alberto's last role?", [], llm_completion)
     assert reply == "Alberto's last role is described in his profile."
-    assert create.call_count == 1
-    kwargs = create.call_args.kwargs
-    assert kwargs["model"] == MODEL_NAME
+    assert llm_completion.call_count == 1
+    kwargs = llm_completion.call_args.kwargs
     assert kwargs["tools"] == twin_tools

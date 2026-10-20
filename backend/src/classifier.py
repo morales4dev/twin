@@ -1,8 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from scope_label import IN_SCOPE, OUT_OF_SCOPE, parse_scope_label
-
-MODEL_NAME = "MiniMax-M2.5"
 
 CLASSIFIER_SYSTEM_PROMPT = """
 You are a binary scope classifier for Alberto Morales's digital twin.
@@ -49,12 +48,9 @@ class ClassifyResult:
     reason: str
 
 
-def classify(message: str, client) -> ClassifyResult:
+def classify(message: str, llm_completion: Callable) -> ClassifyResult:
     try:
-        classifier_response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=build_classifier_messages(message),
-        )
+        classifier_response = llm_completion(build_classifier_messages(message))
         raw_label = classifier_response.choices[0].message.content
     except Exception:
         return ClassifyResult(allowed_for_turn_b=False, reason="error")

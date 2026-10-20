@@ -6,7 +6,7 @@ Digital twin: a Gradio chat app that answers career questions as a personal AI t
 
 Python 3.12.12. Pins are in `backend/requirements.txt` (runtime) and `backend/requirements-dev.txt` (pytest, Playwright). Do not copy pin lists into this README by hand after that.
 
-App entry: `backend/src/app.py` (`gr.ChatInterface`, MiniMax-M2.5 via the OpenAI-compatible client).
+App entry: `backend/src/app.py` (`gr.ChatInterface`, LiteLLM primary then fallback).
 
 ## Setup
 

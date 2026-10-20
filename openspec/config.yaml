@@ -3,9 +3,9 @@ githubCopilot:
   cloudAgent: false
 
 context: |
-  Twin is a Python 3.12.12 Gradio ChatInterface app under backend/src/ (MiniMax-M2.5 via OpenAI-compatible client).
+  Twin is a Python 3.12.12 Gradio ChatInterface app under backend/src/ (LiteLLM primary then fallback).
   Pins: backend/requirements.txt (runtime) and backend/requirements-dev.txt (pytest, Playwright).
-  Tests: pytest units under backend/tests/unit/; Playwright drives Gradio chat, not a live MiniMax suite in v1.
+  Tests: pytest units under backend/tests/unit/; Playwright drives Gradio chat, not a live-model suite in v1.
   Agent constitution: ai-specs/AGENTS.md. Standards: ai-specs/standards/python.md, ai-specs/standards/testing.md, ai-specs/standards/context7.md.
   Product specs: openspec/specs/. Do not invent product specs for tooling-only work.
   OpenSpec delivery: VS Code + Copilot (.github/skills/) and Cursor (.cursor/skills/).
@@ -13,7 +13,7 @@ context: |
 
 rules:
   proposal:
-    - Stay twin-native (Python/Gradio/MiniMax). Do not invent product specs for tooling-only changes.
+    - Stay twin-native (Python/Gradio/LiteLLM). Do not invent product specs for tooling-only changes.
     - OS-only / tooling-only changes set skip_specs: true and must not invent product specs.
     - Always include a Non-goals section.
   design:
@@ -24,4 +24,4 @@ rules:
     - Keep tasks small. Each task must include verification.
     - Do not invent product specs.
     - Archive only after explicit user approval. Do not archive in apply.
-    - A task that adds MiniMax I/O does not put that I/O in chat().
+    - A task that adds LLM I/O does not put that I/O in chat().

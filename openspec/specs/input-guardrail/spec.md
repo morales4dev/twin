@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Code-side deny-list on the latest visitor message so jailbreak, override, slash-command, prompt/memory dump, and debug-framing turns never reach MiniMax.
+Code-side deny-list on the latest visitor message so jailbreak, override, slash-command, prompt/memory dump, and debug-framing turns never reach the LLM.
 
 ## Requirements
 

@@ -10,7 +10,7 @@
 
 - Pytest units live under `backend/tests/unit/`.
 - Units must not hit the network.
-- Playwright drives the Gradio `ChatInterface` chat UI. v1 is a slot only: no live MiniMax suite, no network E2E against the model.
+- Playwright drives the Gradio `ChatInterface` chat UI. v1 is a slot only: no live-model suite, no network E2E against the LLM.
 - Test deps are pinned in `backend/requirements-dev.txt`, not in production `backend/requirements.txt`:
 
 ```
@@ -22,7 +22,7 @@ playwright==1.62.0
 - Unit smoke is import-level and must not hit the network.
 - E2E under `backend/tests/e2e/` may be skipped until a later change implements Gradio chat coverage.
 
-### MiniMax in units
+### LLM in units
 
-- Units that need MiniMax take a fake client on `chat()` / `classify` / `complete`, or call `classify` / `complete` directly.
-- Patching `app.openai` is not the design. Existing ingress patches may stay until a later change adds the injection seam.
+- Units that need an LLM take a fake `llm_completion` on `chat()` / `classify` / `complete`, or patch `litellm.completion` when testing `llm.py`.
+- Patching `app.openai` is not the design.

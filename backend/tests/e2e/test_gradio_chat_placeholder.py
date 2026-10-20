@@ -1,9 +1,9 @@
-"""v1 placeholder. Future Playwright suite drives Gradio ChatInterface. Do not call MiniMax."""
+"""v1 placeholder. Future Playwright suite drives Gradio ChatInterface. Do not call the LLM."""
 
 import pytest
 
 pytestmark = pytest.mark.skip(
-    reason="v1 Playwright slot only; target is Gradio ChatInterface, not a live MiniMax suite"
+    reason="v1 Playwright slot only; target is Gradio ChatInterface, not a live-model suite"
 )
 
 

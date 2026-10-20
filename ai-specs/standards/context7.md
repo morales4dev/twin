@@ -7,7 +7,7 @@ Resolved IDs (apply-time resolve pass):
 | Package | Pin | Context7 ID |
 | --- | --- | --- |
 | gradio | 6.26.0 | `/gradio-app/gradio` |
-| openai | 3.8.0 | `/openai/openai-python` |
+| litellm | 1.106.1 | `/berriai/litellm` |
 | pytest | 9.1.1 | `/pytest-dev/pytest` |
 | playwright | 1.62.0 | `/microsoft/playwright-python` |
 

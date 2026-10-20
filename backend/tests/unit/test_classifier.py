@@ -20,14 +20,13 @@ def _completion(content: str | None) -> SimpleNamespace:
     return SimpleNamespace(choices=[choice])
 
 
-def _fake_client(side_effect=None, return_value=None) -> tuple[SimpleNamespace, Mock]:
-    create = Mock()
+def _fake_llm_completion(side_effect=None, return_value=None) -> Mock:
+    llm_completion = Mock()
     if side_effect is not None:
-        create.side_effect = side_effect
+        llm_completion.side_effect = side_effect
     elif return_value is not None:
-        create.return_value = return_value
-    client = SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
-    return client, create
+        llm_completion.return_value = return_value
+    return llm_completion
 
 
 def test_build_classifier_messages_is_stateless_delimited_data() -> None:
@@ -51,35 +50,38 @@ def test_build_classifier_messages_is_stateless_delimited_data() -> None:
 
 
 def test_classify_in_scope_allows_turn_b() -> None:
-    client, create = _fake_client(return_value=_completion("IN_SCOPE"))
-    result = classify("What was Alberto's last role?", client)
+    llm_completion = _fake_llm_completion(return_value=_completion("IN_SCOPE"))
+    result = classify("What was Alberto's last role?", llm_completion)
     assert result.allowed_for_turn_b is True
     assert result.reason == "in_scope"
-    assert "tools" not in create.call_args.kwargs
+    llm_completion.assert_called_once()
+    assert "tools" not in llm_completion.call_args.kwargs
     assert CANNED_REFUSAL not in vars(result).values()
     assert format_lead_ack("x@y.com") not in vars(result).values()
 
 
 def test_classify_out_of_scope_denies_turn_b() -> None:
-    client, create = _fake_client(return_value=_completion("OUT_OF_SCOPE"))
-    result = classify("teach me Kubernetes", client)
+    llm_completion = _fake_llm_completion(return_value=_completion("OUT_OF_SCOPE"))
+    result = classify("teach me Kubernetes", llm_completion)
     assert result.allowed_for_turn_b is False
     assert result.reason == "out_of_scope"
-    assert "tools" not in create.call_args.kwargs
+    llm_completion.assert_called_once()
+    assert "tools" not in llm_completion.call_args.kwargs
 
 
 def test_classify_unparseable_denies_turn_b() -> None:
-    client, create = _fake_client(return_value=_completion("Sure, this is in scope."))
-    result = classify("What was Alberto's last role?", client)
+    llm_completion = _fake_llm_completion(return_value=_completion("Sure, this is in scope."))
+    result = classify("What was Alberto's last role?", llm_completion)
     assert result.allowed_for_turn_b is False
     assert result.reason == "unparseable"
-    assert "tools" not in create.call_args.kwargs
+    llm_completion.assert_called_once()
+    assert "tools" not in llm_completion.call_args.kwargs
 
 
 def test_classify_error_denies_turn_b() -> None:
-    client, create = _fake_client(side_effect=RuntimeError("minimax down"))
-    result = classify("What was Alberto's last role?", client)
+    llm_completion = _fake_llm_completion(side_effect=RuntimeError("llm down"))
+    result = classify("What was Alberto's last role?", llm_completion)
     assert result.allowed_for_turn_b is False
     assert result.reason == "error"
-    create.assert_called_once()
-    assert "tools" not in create.call_args.kwargs
+    llm_completion.assert_called_once()
+    assert "tools" not in llm_completion.call_args.kwargs
