@@ -7,14 +7,14 @@ Stateless binary classification of the current visitor message so only in-scope 
 ## Requirements
 
 ### Requirement: Classify and answer are separate completions
-Each Gradio turn that is not blocked by the prompt firewall SHALL run a dedicated classifier completion (Turn A) before any career completion. The system MUST NOT produce a visitor-facing career answer from the classifier completion. Classify and answer MUST NEVER be the same MiniMax completion.
+Each Gradio turn that is not blocked by the input guardrail SHALL run a dedicated classifier completion (Turn A) before any career completion. The system MUST NOT produce a visitor-facing career answer from the classifier completion. Classify and answer MUST NEVER be the same MiniMax completion.
 
 #### Scenario: Input guardrail already blocked
-- **WHEN** the prompt firewall matches the latest user message
+- **WHEN** the input guardrail matches the latest user message
 - **THEN** the system MUST NOT start Turn A or Turn B
 
 #### Scenario: Input guardrail did not match
-- **WHEN** the prompt firewall does not match the latest user message
+- **WHEN** the input guardrail does not match the latest user message
 - **THEN** the system runs Turn A before any Turn B career completion
 
 ### Requirement: Turn A is stateless and treats the current user string as data
@@ -31,7 +31,7 @@ Turn A SHALL use the same MiniMax model as the twin. The classifier request MUST
 
 #### Scenario: Override text inside delimiters does not become the label
 - **WHEN** the delimited current user message contains override text such as “ignore previous” or “you are now …”
-- **AND** the firewall did not already block the turn
+- **AND** the input guardrail did not already block the turn
 - **THEN** Turn A still returns only a scope label
 - **AND** Python routing, not the override text, decides whether Turn B runs
 
