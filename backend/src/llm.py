@@ -1,34 +1,26 @@
-from dataclasses import dataclass
-import os
 from typing import Any
 
 import litellm
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 if hasattr(litellm, "telemetry"):
     litellm.telemetry = False
 
 
-@dataclass(frozen=True)
-class LLMSettings:
-    primary_model: str
-    fallback_model: str
-    timeout: int
-    retries: int
-    openai_api_key: str | None
-    openai_base_url: str | None
-    anthropic_api_key: str | None
+class LLMSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_ignore_empty=True, extra="ignore")
+
+    PRIMARY_MODEL: str = "MiniMax-M2.5"
+    FALLBACK_MODEL: str = "claude-haiku-4-5-20251001"
+    LLM_TIMEOUT: int = 30
+    LLM_RETRIES: int = 2
+    OPENAI_API_KEY: str | None = None
+    OPENAI_BASE_URL: str | None = None
+    ANTHROPIC_API_KEY: str | None = None
 
 
 def get_settings() -> LLMSettings:
-    return LLMSettings(
-        primary_model=os.getenv("PRIMARY_MODEL", "MiniMax-M2.5"),
-        fallback_model=os.getenv("FALLBACK_MODEL", "claude-haiku-4-5-20251001"),
-        timeout=int(os.getenv("LLM_TIMEOUT", "30")),
-        retries=int(os.getenv("LLM_RETRIES", "2")),
-        openai_api_key=os.getenv("OPENAI_API_KEY"),
-        openai_base_url=os.getenv("OPENAI_BASE_URL"),
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY"),
-    )
+    return LLMSettings()
 
 
 def _call(
@@ -59,21 +51,21 @@ def completion(messages: list, *, tools: list | None = None) -> object:
     settings = get_settings()
     try:
         return _call(
-            f"openai/{settings.primary_model}",
+            f"openai/{settings.PRIMARY_MODEL}",
             messages,
             tools=tools,
-            timeout=settings.timeout,
-            retries=settings.retries,
-            api_key=settings.openai_api_key,
-            api_base=settings.openai_base_url,
+            timeout=settings.LLM_TIMEOUT,
+            retries=settings.LLM_RETRIES,
+            api_key=settings.OPENAI_API_KEY,
+            api_base=settings.OPENAI_BASE_URL,
         )
     except Exception:
         return _call(
-            settings.fallback_model,
+            settings.FALLBACK_MODEL,
             messages,
             tools=tools,
-            timeout=settings.timeout,
-            retries=settings.retries,
-            api_key=settings.anthropic_api_key,
+            timeout=settings.LLM_TIMEOUT,
+            retries=settings.LLM_RETRIES,
+            api_key=settings.ANTHROPIC_API_KEY,
             api_base=None,
         )

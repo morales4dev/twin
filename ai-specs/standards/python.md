@@ -10,7 +10,7 @@
 - Validate input at boundaries.
 - Structured logs (event + fields), not ad-hoc print for new operational logging.
 - Early return; keep the happy path unindented.
-- Secrets stay in env (`.env` gitignored). Names only in `.env.example`. Never commit secrets.
+- Secrets stay in env (`.env` gitignored). `.env.example` lists secret names only (blank values). Typed LLM settings may show their defaults. Never commit secrets.
 
 ## Layer 2 — Twin stack
 
@@ -25,6 +25,7 @@
 ```
 gradio==6.26.0
 litellm==1.106.1
+pydantic-settings==2.16.1
 pypdf==6.17.0
 python-dotenv==1.2.3
 requests==2.34.2
