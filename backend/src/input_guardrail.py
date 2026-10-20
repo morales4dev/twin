@@ -9,6 +9,9 @@ DENY_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"show\s+your\s+prompt", re.IGNORECASE),
     re.compile(r"show\s+your\s+memory", re.IGNORECASE),
     re.compile(r"for\s+debugging", re.IGNORECASE),
+    re.compile(r"\byou\s+are\s+now\b", re.IGNORECASE),
+    re.compile(r"forget\s+(everything|all|previous)", re.IGNORECASE),
+    re.compile(r"</?\s*(system|instructions?|prompt)\s*>", re.IGNORECASE),
 )
 
 
