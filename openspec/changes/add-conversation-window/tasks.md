@@ -1,0 +1,15 @@
+## 1. Failing complete() window units
+
+- [x] 1.1 In `backend/tests/unit/test_complete.py`, add units that call `complete(message, history, llm_completion)` with a fake callable and assert the first-call `messages`: history of 8 prior turns or fewer includes every history message and the current user last; history of more than 8 prior turns omits the oldest pair, includes the newest 8 pairs and the current user last, and adds no summary/anchor/metadata message; a canned-refusal assistant string among the newest 8 pairs is present and the same string older than those 8 is absent; the input `history` list still has every prior turn after `complete()` returns; run from `backend/` with `.venv/bin/python -m pytest tests/unit/test_complete.py`; and verify the new cases fail because `complete()` still concatenates the full `history`.
+- [x] 1.2 In `backend/tests/unit/test_complete.py`, add a tool-loop unit with over-cap history whose first fake call returns `tool_calls` and whose second returns `stop`, asserting both calls keep the same windowed prior turns and still omit the dropped pair; run from `backend/` with `.venv/bin/python -m pytest tests/unit/test_complete.py`; and verify that case fails on the current unwindowed `messages` list.
+
+## 2. Window inside complete() (I/O stays out of chat)
+
+- [x] 2.1 In `backend/src/complete.py`, add `MAX_WINDOW_TURNS = 8` and `window_history(history)` as `history[-(MAX_WINDOW_TURNS * 2):]`, build Turn B as `system + window_history(history) + current user`, leave the tool loop appending to that list, do not mutate the caller’s `history`, do not add a new module or env setting, and do not put this slice in `chat()`; run from `backend/` with `.venv/bin/python -m pytest tests/unit/test_complete.py`; and verify those units pass with no network.
+
+## 3. Verify (no chat() I/O, no archive)
+
+- [x] 3.0 In `backend/tests/unit/test_llm.py`, make `llm_env` delete `LLM_TIMEOUT`, `LLM_RETRIES`, `PRIMARY_MODEL`, and `FALLBACK_MODEL` so blank names-only `.env` values do not override defaults; do not change `get_settings()` or production timeout/retry behavior; run from `backend/` with `.venv/bin/python -m pytest tests/unit/test_llm.py`; and verify those units pass with no network.
+- [x] 3.1 From `backend/`, run `.venv/bin/python -m pytest tests/unit` and verify all units pass with no network, including unchanged ingress (`test_chat_ingress.py` still asserts Turn A omits tools, Turn B sends tools, and fail-closed strings).
+- [x] 3.2 Confirm `chat()` in `backend/src/app.py` still sequences only `capture_typed_email` → `matches_input_guardrail` → `classify` → `fail_closed_reply` / `complete` and still passes the full `history` through, `classifier.py` was not edited, and no session store / summarization / anchors / metadata extractor was added.
+- [x] 3.3 Run `openspec validate add-conversation-window --type change` from Twin, verify it succeeds, and confirm no `openspec archive` was run and no live spec under `openspec/specs/` was hand-edited.

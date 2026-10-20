@@ -10,6 +10,9 @@ def llm_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-openai")
     monkeypatch.setenv("OPENAI_BASE_URL", "https://example.test/v1")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test-anthropic")
+    # Names-only .env sets these to "". getenv then skips the defaults.
+    for name in ("LLM_TIMEOUT", "LLM_RETRIES", "PRIMARY_MODEL", "FALLBACK_MODEL"):
+        monkeypatch.delenv(name, raising=False)
 
 
 @patch("litellm.completion")
