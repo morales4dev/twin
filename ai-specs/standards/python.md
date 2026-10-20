@@ -43,7 +43,7 @@ Operational default for any change that edits `backend/src`. Current `backend/sr
 | `complete(message, history, client)` | Turn B and the tool loop. |
 | `fail_closed_reply(email)` | Lead-ack vs canned. Used only after Turn A. |
 
-- Firewall plus typed email stays canned.
+- Input guardrail plus typed email stays canned.
 - Inject the MiniMax client into `chat()` as an optional kwarg (Gradio still calls two arguments).
 - No shared MiniMax helper that could put `tools=` on Turn A.
 - KISS, YAGNI, and DRY win over a class tree or Protocols for one implementation.

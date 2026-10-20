@@ -6,7 +6,7 @@ from context import get_absolute_path
 from classifier import MODEL_NAME, classify
 from complete import complete
 from email_capture import capture_typed_email
-from firewall import matches_firewall
+from input_guardrail import matches_input_guardrail
 from refusal import CANNED_REFUSAL, fail_closed_reply
 
 print(get_absolute_path())
@@ -18,7 +18,7 @@ openai = OpenAI()
 def chat(message: str, history: list, client=None) -> str:
     client = client or openai
     email = capture_typed_email(message)
-    if matches_firewall(message):
+    if matches_input_guardrail(message):
         return CANNED_REFUSAL
     result = classify(message, client)
     if not result.allowed_for_turn_b:

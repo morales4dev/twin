@@ -12,6 +12,6 @@ DENY_PATTERNS: tuple[re.Pattern[str], ...] = (
 )
 
 
-def matches_firewall(message: str) -> bool:
+def matches_input_guardrail(message: str) -> bool:
     """Return True if the latest user string matches a deny-list family."""
     return any(pattern.search(message) for pattern in DENY_PATTERNS)

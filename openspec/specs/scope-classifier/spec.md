@@ -9,11 +9,11 @@ Stateless binary classification of the current visitor message so only in-scope 
 ### Requirement: Classify and answer are separate completions
 Each Gradio turn that is not blocked by the prompt firewall SHALL run a dedicated classifier completion (Turn A) before any career completion. The system MUST NOT produce a visitor-facing career answer from the classifier completion. Classify and answer MUST NEVER be the same MiniMax completion.
 
-#### Scenario: Firewall already blocked
+#### Scenario: Input guardrail already blocked
 - **WHEN** the prompt firewall matches the latest user message
 - **THEN** the system MUST NOT start Turn A or Turn B
 
-#### Scenario: Firewall did not match
+#### Scenario: Input guardrail did not match
 - **WHEN** the prompt firewall does not match the latest user message
 - **THEN** the system runs Turn A before any Turn B career completion
 

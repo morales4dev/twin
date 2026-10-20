@@ -27,7 +27,7 @@ def _fake_client(side_effect=None, return_value=None) -> tuple[SimpleNamespace, 
 
 
 @patch("email_capture.record_user_details")
-def test_firewall_match_skips_minimax(record_user_details) -> None:
+def test_input_guardrail_match_skips_minimax(record_user_details) -> None:
     from app import chat
 
     client, create = _fake_client()
@@ -38,7 +38,7 @@ def test_firewall_match_skips_minimax(record_user_details) -> None:
 
 
 @patch("email_capture.record_user_details")
-def test_firewall_match_records_typed_email(record_user_details) -> None:
+def test_input_guardrail_match_records_typed_email(record_user_details) -> None:
     from app import chat
 
     client, create = _fake_client()
@@ -141,7 +141,7 @@ def test_classifier_exception_with_typed_email_returns_lead_ack(
 
 
 @patch("email_capture.record_user_details")
-def test_firewall_typed_email_stays_canned_without_lead_ack(
+def test_input_guardrail_typed_email_stays_canned_without_lead_ack(
     record_user_details,
 ) -> None:
     from app import chat
