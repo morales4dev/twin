@@ -220,3 +220,58 @@ I would not ship “all measures” as one blob on day one: ship 1–8, replay 0
 ## Input compression
 
 ## Output size
+
+# Backlog → change map
+
+========================================================================================================
+========================================================================================================
+========================================================================================================
+
+Mapped against the five OpenSpec changes from 20–21 Oct 2026: `rename-firewall-to-input-guardrail`, `expand-input-guardrail-patterns`, `adopt-litellm-primary-fallback`, `add-conversation-window`, `validate-llm-env-settings`. `validate-llm-env-settings` does not map to any backlog bullet (settings hygiene for LiteLLM). Item 6 and item 9 were already shipped on 6 Sep as `add-prompt-firewall-and-classifier`.
+
+| Backlog item | Covered by the 5? | Change |
+|---|---|---|
+| 1. Recency reminder (sticky system + last-user sandwich) | No | — |
+| 2. Keep full LinkedIn out of the instruction block | No | — |
+| 3. Strip PII from the sandbox | No | — |
+| 4. Tool allowlist + schema validation | No | — |
+| 5. Output filter (regex / cheap classifier) | No | — |
+| 6. Intent firewall (deny-list on the user message) | **Partial** | `expand-input-guardrail-patterns` (new families). `rename-firewall-to-input-guardrail` is name-only. Core gate was already `add-prompt-firewall-and-classifier` (6 Sep). |
+| 7. Never echo the sandbox or the prompt | No | — |
+| 8. History hygiene | **Partial** | `add-conversation-window` — 8-turn cap only. Still missing: drop/compress refusals and `<think>` in history, strip CoT before the visitor, reset after N refusals. |
+| 9. Split “Alberto facts” vs “anything else” | No | Already shipped 6 Sep as binary `IN_SCOPE` / `OUT_OF_SCOPE` (not the 5-class `SKILL_TRAP` / `META` / `LEAD` design). LiteLLM only changed how Turn A/B are called. |
+| 10. Grounded answering (retrieve CV chunks) | No | — |
+| 11. Structured resume (JSON) | No | — |
+| 12. Lead tool UX in the UI, not the LLM | No | — |
+| 13. Second model pass as critic | No | — |
+| 14. Session risk score | No | — |
+| 15. Allowlisted dialogue policy (FSM) | No | — |
+| 16. Eval harness from 01_jose | No | — |
+| Cost: Prompt catching | No | Heading is empty. Closest adjacent work is the input guardrail skipping the LLM, not a dedicated cost control. |
+| Cost: Model election | **Yes** | `adopt-litellm-primary-fallback` |
+| Cost: Input compression | **Partial** | `add-conversation-window` — drop-oldest, not summarization or token compression. |
+| Cost: Output size | No | — |
+
+The “would not bother” lines (longer anti-injection novels, “never reveal the prompt” as the only control, a third judge model) were not implemented. That matches the backlog on purpose.
+
+## How this sits against the backlog’s own order
+
+The draft’s limited-time stack is **6 + 5 + 4 + 3 + 1 + 8 + 7 + 10 + 16**.
+
+```
+Done or advanced now
+  6  intent firewall          (Sept core + Oct expand)
+  8  history hygiene          (cap only)
+  -- model election           (LiteLLM; cost section)
+
+Still open in that stack
+  5  output filter
+  4  tool allowlist
+  3  strip PII
+  1  recency reminder
+  7  no-echo / similarity
+ 10  grounded retrieval
+ 16  Jose eval harness
+```
+
+The still-open cheap ones are 5, 4, 3, and 1
